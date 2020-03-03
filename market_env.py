@@ -20,7 +20,7 @@ class MarketEnv(gym.Env):
 		self.targetCodes = []
 		self.dataMap = {}
 
-		for code in (target_codes + input_codes):
+		for code in (list(target_codes) + list(input_codes)):
 			fn = dir_path + "./" + code + ".csv"
 
 			data = {}
@@ -48,11 +48,11 @@ class MarketEnv(gym.Env):
 
 								lastClose = close
 								lastVolume = volume
-						except Exception, e:
-							print e, line.strip().split(",")
+						except Exception as e:
+							print(e, line.strip().split(","))
 				f.close()
-			except Exception, e:
-				print e
+			except Exception as e:
+				print(e)
 
 			if len(data.keys()) > scope:
 				self.dataMap[code] = data
@@ -72,7 +72,7 @@ class MarketEnv(gym.Env):
 		self.reset()
 		self._seed()
 
-	def _step(self, action):
+	def step(self, action):
 		if self.done:
 			return self.state, self.reward, self.done, {}
 
@@ -109,7 +109,7 @@ class MarketEnv(gym.Env):
 		vari = self.target[self.targetDates[self.currentTargetIndex]][2]
 		self.cum = self.cum * (1 + vari)
 
-		for i in xrange(len(self.boughts)):
+		for i in range(len(self.boughts)):
 			self.boughts[i] = self.boughts[i] * MarketEnv.PENALTY * (1 + vari * (-1 if sum(self.boughts) < 0 else 1))
 
 		self.defineState()
@@ -127,7 +127,7 @@ class MarketEnv(gym.Env):
 
 		return self.state, self.reward, self.done, {"dt": self.targetDates[self.currentTargetIndex], "cum": self.cum, "code": self.targetCode}
 
-	def _reset(self):
+	def reset(self):
 		self.targetCode = self.targetCodes[int(random() * len(self.targetCodes))]
 		self.target = self.dataMap[self.targetCode]
 		self.targetDates = sorted(self.target.keys())
@@ -142,7 +142,7 @@ class MarketEnv(gym.Env):
 
 		return self.state
 
-	def _render(self, mode='human', close=False):
+	def render(self, mode='human', close=False):
 		if close:
 			return
 		return self.state
@@ -168,12 +168,12 @@ class MarketEnv(gym.Env):
 
 		subject = []
 		subjectVolume = []
-		for i in xrange(self.scope):
+		for i in range(self.scope):
 			try:
 				subject.append([self.target[self.targetDates[self.currentTargetIndex - 1 - i]][2]])
 				subjectVolume.append([self.target[self.targetDates[self.currentTargetIndex - 1 - i]][3]])
-			except Exception, e:
-				print self.targetCode, self.currentTargetIndex, i, len(self.targetDates)
+			except Exception as e:
+				print(self.targetCode, self.currentTargetIndex, i, len(self.targetDates))
 				self.done = True
 		tmpState.append([[subject, subjectVolume]])
 

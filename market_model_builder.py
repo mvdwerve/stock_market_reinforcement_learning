@@ -4,7 +4,7 @@ class MarketPolicyGradientModelBuilder(AbstractModelBuilder):
 
 	def buildModel(self):
 		from keras.models import Model
-		from keras.layers import merge, Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Merge, merge
+		from keras.layers import Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Concatenate
 		from keras.layers.advanced_activations import LeakyReLU
 
 		B = Input(shape = (3,))
@@ -13,27 +13,19 @@ class MarketPolicyGradientModelBuilder(AbstractModelBuilder):
 		inputs = [B]
 		merges = [b]
 
-		for i in xrange(1):
+		for i in range(1):
 			S = Input(shape=[2, 60, 1])
 			inputs.append(S)
 
-			h = Convolution2D(2048, 3, 1, border_mode = 'valid')(S)
+			h = Convolution2D(2048, (3, 1), border_mode = 'valid', data_format='channels_first')(S)
 			h = LeakyReLU(0.001)(h)
-			h = Convolution2D(2048, 5, 1, border_mode = 'valid')(S)
+			h = Convolution2D(2048, (5, 1), border_mode = 'valid', data_format='channels_first')(S)
 			h = LeakyReLU(0.001)(h)
-			h = Convolution2D(2048, 10, 1, border_mode = 'valid')(S)
+			h = Convolution2D(2048, (10, 1), border_mode = 'valid', data_format='channels_first')(S)
 			h = LeakyReLU(0.001)(h)
-			h = Convolution2D(2048, 20, 1, border_mode = 'valid')(S)
+			h = Convolution2D(2048, (20, 1), border_mode = 'valid', data_format='channels_first')(S)
 			h = LeakyReLU(0.001)(h)
-			h = Convolution2D(2048, 40, 1, border_mode = 'valid')(S)
-			h = LeakyReLU(0.001)(h)
-
-			h = Flatten()(h)
-			h = Dense(512)(h)
-			h = LeakyReLU(0.001)(h)
-			merges.append(h)
-
-			h = Convolution2D(2048, 60, 1, border_mode = 'valid')(S)
+			h = Convolution2D(2048, (40, 1), border_mode = 'valid', data_format='channels_first')(S)
 			h = LeakyReLU(0.001)(h)
 
 			h = Flatten()(h)
@@ -41,7 +33,15 @@ class MarketPolicyGradientModelBuilder(AbstractModelBuilder):
 			h = LeakyReLU(0.001)(h)
 			merges.append(h)
 
-		m = merge(merges, mode = 'concat', concat_axis = 1)
+			h = Convolution2D(2048, (60, 1), border_mode = 'valid', data_format='channels_first')(S)
+			h = LeakyReLU(0.001)(h)
+
+			h = Flatten()(h)
+			h = Dense(512)(h)
+			h = LeakyReLU(0.001)(h)
+			merges.append(h)
+
+		m = Concatenate()(merges)
 		m = Dense(1024)(m)
 		m = LeakyReLU(0.001)(m)
 		m = Dense(512)(m)
@@ -57,7 +57,7 @@ class MarketModelBuilder(AbstractModelBuilder):
 	
 	def buildModel(self):
 		from keras.models import Model
-		from keras.layers import merge, Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Merge, merge
+		from keras.layers import Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Concatenate
 		from keras.layers.advanced_activations import LeakyReLU
 
 		dr_rate = 0.0
@@ -68,7 +68,7 @@ class MarketModelBuilder(AbstractModelBuilder):
 		inputs = [B]
 		merges = [b]
 
-		for i in xrange(1):
+		for i in range(1):
 			S = Input(shape=[2, 60, 1])
 			inputs.append(S)
 
@@ -98,7 +98,7 @@ class MarketModelBuilder(AbstractModelBuilder):
 			h = Dropout(dr_rate)(h)
 			merges.append(h)
 
-		m = merge(merges, mode = 'concat', concat_axis = 1)
+		m = Concatenate()(merges)
 		m = Dense(1024)(m)
 		m = LeakyReLU(0.001)(m)
 		m = Dropout(dr_rate)(m)
